@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>어버이날: 마음의 흔적 찾기</title>
+    <style>
+        :root {
+            --warm-bg: #fdf5e6;
+            --soft-brown: #6d4c41;
+            --accent: #d4a373;
+        }
+
+        body {
+            margin: 0;
+            background: var(--warm-bg);
+            color: var(--soft-brown);
+            font-family: 'Nanum Myeongjo', serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            touch-action: none;
+        }
+
+        .title {
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+        }
+
+        /* 게임 캔버스 영역 */
+        #container {
+            position: relative;
+            width: 500px;
+            height: 400px;
+            background: white;
+            border: 10px solid white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            user-select: none;
+        }
+
+        #message-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 1;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 2;
+            cursor: crosshair;
+        }
+
+        .emoji { font-size: 4rem; margin-bottom: 15px; }
+        .text { font-size: 1.2rem; line-height: 1.7; }
+
+        .btn-next {
+            margin-top: 30px;
+            padding: 10px 25px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            opacity: 0;
+            transition: 0.5s;
+        }
+
+        .btn-next.visible { opacity: 1; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="title">흐릿한 기억을 마우스로 문질러보세요</div>
+
+<div id="container">
+    <div id="message-layer">
+        <div class="emoji" id="emoji">🕯️</div>
+        <div class="text" id="text">내용이 나타납니다.</div>
+    </div>
+    <canvas id="scratch-canvas"></canvas>
+</div>
+
+<button id="next-btn" class="btn-next" onclick="resetGame()">다음 기억 찾기</button>
+
+<script>
+    const memories = [
+        { emoji: "🍼", text: "당신이 처음 내 손가락을 꽉 잡았을 때,<br>세상을 다 가진 기분이었습니다." },
+        { emoji: "🍙", text: "소풍 가던 날, 당신이 남긴 김밥 꼬투리마저<br>부모에겐 가장 달콤한 성찬이었습니다." },
+        { emoji: "🎓", text: "어느새 커버린 당신의 학사모를 보며<br>지나온 고생이 눈 녹듯 사라졌단다." },
+        { emoji: "💌", text: "사랑한다. 말로 다 표현 못 할 만큼.<br>나의 전부인 당신에게." }
+    ];
+
+    let current = 0;
+    const canvas = document.getElementById('scratch-canvas');
+    const ctx = canvas.getContext('2d');
+    const nextBtn = document.getElementById('next-btn');
+
+    function initCanvas() {
+        canvas.width = 500;
+        canvas.height = 400;
+        
+        // 캔버스 덮개 (흐릿한 기억 표현)
+        ctx.fillStyle = "#dcdcdc";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 질감 효과 추가
+        for(let i=0; i<500; i+=10) {
+            for(let j=0; j<400; j+=10) {
+                ctx.fillStyle = `rgba(200,200,200,${Math.random()})`;
+                ctx.fillRect(i, j, 10, 10);
+            }
+        }
+
+        ctx.globalCompositeOperation = 'destination-out';
+        nextBtn.classList.remove('visible');
+        
+        document.getElementById('emoji').innerText = memories[current].emoji;
+        document.getElementById('text').innerHTML = memories[current].text;
+    }
+
+    function scratch(e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 30, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 어느 정도 문지르면 버튼 등장
+        nextBtn.classList.add('visible');
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+        if(e.buttons === 1) scratch(e);
+    });
+    canvas.addEventListener('touchmove', (e) => scratch(e));
+
+    function resetGame() {
+        current = (current + 1) % memories.length;
+        ctx.globalCompositeOperation = 'source-over';
+        initCanvas();
+    }
+
+    window.onload = initCanvas;
+</script>
+
+</body>
+</html>
